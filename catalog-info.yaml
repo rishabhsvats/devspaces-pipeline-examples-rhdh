@@ -1,0 +1,56 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: devspaces-pipeline-example
+  description: OpenShift Dev Spaces CI/CD Pipeline with Tekton and ArgoCD
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    argocd/app-name: devspaces-pipeline-example
+    backstage.io/kubernetes-id: devspaces-pipeline-example
+    backstage.io/kubernetes-namespace: pipeline-test
+    janus-idp.io/tekton-enabled: 'true'
+    backstage.io/source-location: url:https://github.com/rishabhsvats/devspaces-pipeline-examples-rhdh
+  tags:
+    - golang
+    - tekton
+    - argocd
+    - gitops
+    - devspaces
+    - pipeline
+  links:
+    - url: https://github.com/rishabhsvats/devspaces-pipeline-examples-rhdh
+      title: Source Repository
+      icon: github
+    - url: https://developers.redhat.com/articles/2026/02/16/build-cicd-pipeline-openshift-dev-spaces-and-gitops
+      title: Documentation
+      icon: docs
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: devspaces-cicd
+  providesApis:
+    - simple-go-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: simple-go-api
+  description: Simple Go HTTP API
+spec:
+  type: openapi
+  lifecycle: production
+  owner: platform-team
+  system: devspaces-cicd
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: Simple Go API
+      version: 1.0.0
+    paths:
+      /:
+        get:
+          summary: Hello World endpoint
+          responses:
+            '200':
+              description: Success

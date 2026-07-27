@@ -1,0 +1,232 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: devspaces-tekton-argocd-pipeline
+  title: OpenShift Dev Spaces CI/CD Pipeline with Tekton & ArgoCD
+  description: Create a complete CI/CD pipeline using OpenShift Dev Spaces, Tekton Pipelines, and ArgoCD GitOps for Go applications
+  tags:
+    - recommended
+    - golang
+    - tekton
+    - argocd
+    - gitops
+    - devspaces
+    - openshift
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Provide Information for Application
+      required:
+        - component_id
+        - owner
+        - system
+      properties:
+        component_id:
+          title: Name
+          type: string
+          description: Unique name of the component
+          ui:field: EntityNamePicker
+          ui:autofocus: true
+        description:
+          title: Description
+          type: string
+          description: Help others understand what this component does
+          default: A Go application with CI/CD pipeline using Tekton and ArgoCD
+        owner:
+          title: Owner
+          type: string
+          description: Owner of the component
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: [Group, User]
+        system:
+          title: System
+          type: string
+          description: System this component belongs to
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: System
+            defaultKind: System
+
+    - title: Provide Image Registry Information
+      required:
+        - image_registry
+        - image_repository
+        - image_tag
+      properties:
+        image_registry:
+          title: Image Registry
+          type: string
+          description: Container image registry URL
+          default: docker.io
+          enum:
+            - docker.io
+            - quay.io
+            - ghcr.io
+        image_repository:
+          title: Image Repository
+          type: string
+          description: Container image repository (e.g., username/image-name)
+          default: rishabh1234/simple-go
+        image_tag:
+          title: Image Tag
+          type: string
+          description: Initial image tag
+          default: latest
+
+    - title: Configure OpenShift Details
+      required:
+        - namespace
+        - cluster_id
+      properties:
+        namespace:
+          title: Namespace
+          type: string
+          description: OpenShift namespace for deployment
+          default: pipeline-test
+        cluster_id:
+          title: Cluster Id
+          type: string
+          description: OpenShift cluster identifier
+          default: .apps.cluster.example.com
+
+    - title: Choose a Git Repository Location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+              - gitlab.com
+            allowedOwners:
+              - rishabhsvats-org
+
+    - title: Configure ArgoCD
+      required:
+        - argocd_namespace
+      properties:
+        argocd_namespace:
+          title: ArgoCD Namespace
+          type: string
+          description: Namespace where ArgoCD/OpenShift GitOps is installed
+          default: openshift-gitops
+        enable_auto_sync:
+          title: Enable Auto Sync
+          type: boolean
+          description: Enable automatic synchronization in ArgoCD
+          default: true
+        enable_auto_heal:
+          title: Enable Auto Heal
+          type: boolean
+          description: Enable automatic healing in ArgoCD
+          default: true
+
+  steps:
+    - id: template
+      name: Fetch Skeleton + Template
+      action: fetch:template
+      input:
+        url: ./skeleton
+        copyWithoutTemplating:
+          - .github/workflows/*
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          namespace: ${{ parameters.namespace }}
+          owner: ${{ parameters.owner }}
+          cluster: ${{ parameters.cluster_id }}
+          destination: ${{ parameters.repoUrl | parseRepoUrl }}
+          image_registry: ${{ parameters.image_registry }}
+          image_repository: ${{ parameters.image_repository }}
+          image_tag: ${{ parameters.image_tag }}
+          image_url: ${{ parameters.image_registry }}/${{ parameters.image_repository }}
+          argocd_namespace: ${{ parameters.argocd_namespace }}
+          enable_auto_sync: ${{ parameters.enable_auto_sync }}
+          enable_auto_heal: ${{ parameters.enable_auto_heal }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: ${{ parameters.description }}
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+        repoVisibility: public
+        deleteBranchOnMerge: true
+        protectDefaultBranch: false
+
+    - id: create-argocd-app
+      name: Create ArgoCD Application
+      action: argocd:create-app
+      input:
+        appName: ${{ parameters.component_id }}
+        argoInstance: default
+        namespace: ${{ parameters.argocd_namespace }}
+        repoUrl: ${{ steps.publish.output.remoteUrl }}
+        path: manifests
+        project: default
+        destination:
+          server: https://kubernetes.default.svc
+          namespace: ${{ parameters.namespace }}
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: ${{ parameters.enable_auto_heal }}
+            allowEmpty: false
+          syncOptions:
+            - CreateNamespace=true
+          retry:
+            limit: 5
+            backoff:
+              duration: 5s
+              factor: 2
+              maxDuration: 3m
+
+    - id: create-tekton-resources
+      name: Create Tekton Pipeline Resources
+      action: kubernetes:apply
+      input:
+        manifestPath: .tekton/
+        namespaced: true
+        namespace: ${{ parameters.namespace }}
+
+    - id: register-component
+      name: Register Component
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+    - id: create-github-webhook
+      name: Create GitHub Webhook for Tekton
+      action: github:webhook
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        webhookUrl: https://pipelines-as-code-controller-openshift-pipelines${{ parameters.cluster_id }}
+        events:
+          - push
+          - pull_request
+        active: true
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register-component.output.entityRef }}
+      - title: ArgoCD Application
+        url: https://openshift-gitops-server-${{ parameters.argocd_namespace }}${{ parameters.cluster_id }}/applications/${{ parameters.component_id }}
+      - title: Tekton Pipelines
+        url: https://console-openshift-console${{ parameters.cluster_id }}/dev-pipelines/ns/${{ parameters.namespace }}
+      - title: OpenShift Dev Spaces
+        url: https://devspaces${{ parameters.cluster_id }}/#${{ steps.publish.output.remoteUrl }}

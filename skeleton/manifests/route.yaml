@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: ${{ values.component_id }}
+    app.kubernetes.io/instance: ${{ values.component_id }}
+    app.kubernetes.io/name: ${{ values.component_id }}
+    backstage.io/kubernetes-id: ${{ values.component_id }}
+  name: ${{ values.component_id }}
+spec:
+  port:
+    targetPort: http
+  to:
+    kind: Service
+    name: ${{ values.component_id }}
+    weight: 100
+  wildcardPolicy: None

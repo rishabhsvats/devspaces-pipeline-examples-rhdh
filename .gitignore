@@ -1,0 +1,8 @@
+simple-go
+.cache/
+.docker/
+.config/
+.git-credentials
+.gitconfig
+
+.claude/

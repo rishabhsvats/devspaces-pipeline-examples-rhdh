@@ -1,0 +1,38 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.component_id }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    argocd/app-name: ${{ values.component_id }}
+    backstage.io/kubernetes-id: ${{ values.component_id }}
+    backstage.io/kubernetes-namespace: ${{ values.namespace }}
+    janus-idp.io/tekton-enabled: 'true'
+    backstage.io/source-location: url:https://${{ values.destination.host }}/${{ values.destination.owner }}/${{ values.destination.repo }}
+    quay.io/repository-slug: ${{ values.image_repository }}
+  tags:
+    - golang
+    - tekton
+    - argocd
+    - gitops
+    - devspaces
+    - pipeline
+  links:
+    - url: https://${{ values.destination.host }}/${{ values.destination.owner }}/${{ values.destination.repo }}
+      title: Source Repository
+      icon: github
+    - url: https://openshift-gitops-server-${{ values.argocd_namespace }}${{ values.cluster }}/applications/${{ values.component_id }}
+      title: ArgoCD Application
+      icon: argocd
+    - url: https://console-openshift-console${{ values.cluster }}/dev-pipelines/ns/${{ values.namespace }}
+      title: Tekton Pipelines
+      icon: tekton
+    - url: https://devspaces${{ values.cluster }}/#https://${{ values.destination.host }}/${{ values.destination.owner }}/${{ values.destination.repo }}
+      title: Open in Dev Spaces
+      icon: devspaces
+spec:
+  type: service
+  lifecycle: production
+  owner: ${{ values.owner }}
+  system: ${{ values.system }}
