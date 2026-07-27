@@ -142,6 +142,7 @@ spec:
           description: ${{ parameters.description }}
           namespace: ${{ parameters.namespace }}
           owner: ${{ parameters.owner }}
+          system: ${{ parameters.system }}
           cluster: ${{ parameters.cluster_id }}
           destination: ${{ parameters.repoUrl | parseRepoUrl }}
           image_registry: ${{ parameters.image_registry }}
@@ -172,31 +173,7 @@ spec:
         namespace: ${{ parameters.argocd_namespace }}
         repoUrl: ${{ steps.publish.output.remoteUrl }}
         path: manifests
-        project: default
-        destination:
-          server: https://kubernetes.default.svc
-          namespace: ${{ parameters.namespace }}
-        syncPolicy:
-          automated:
-            prune: true
-            selfHeal: ${{ parameters.enable_auto_heal }}
-            allowEmpty: false
-          syncOptions:
-            - CreateNamespace=true
-          retry:
-            limit: 5
-            backoff:
-              duration: 5s
-              factor: 2
-              maxDuration: 3m
-
-    - id: create-tekton-resources
-      name: Create Tekton Pipeline Resources
-      action: kubernetes:apply
-      input:
-        manifestPath: .tekton/
-        namespaced: true
-        namespace: ${{ parameters.namespace }}
+        projectName: default
 
     - id: register-component
       name: Register Component
@@ -204,17 +181,6 @@ spec:
       input:
         repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
         catalogInfoPath: '/catalog-info.yaml'
-
-    - id: create-github-webhook
-      name: Create GitHub Webhook for Tekton
-      action: github:webhook
-      input:
-        repoUrl: ${{ parameters.repoUrl }}
-        webhookUrl: https://pipelines-as-code-controller-openshift-pipelines${{ parameters.cluster_id }}
-        events:
-          - push
-          - pull_request
-        active: true
 
   output:
     links:
