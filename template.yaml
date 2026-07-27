@@ -165,7 +165,7 @@ spec:
 
     - id: create-argocd-app
       name: Create ArgoCD Application
-      action: argocd:create-app
+      action: argocd:create-resources
       input:
         appName: ${{ parameters.component_id }}
         argoInstance: default
