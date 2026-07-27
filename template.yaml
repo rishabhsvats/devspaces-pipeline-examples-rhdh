@@ -164,17 +164,6 @@ spec:
         deleteBranchOnMerge: true
         protectDefaultBranch: false
 
-    - id: create-argocd-app
-      name: Create ArgoCD Application
-      action: argocd:create-resources
-      input:
-        appName: ${{ parameters.component_id }}
-        argoInstance: default
-        namespace: ${{ parameters.argocd_namespace }}
-        repoUrl: ${{ steps.publish.output.remoteUrl }}
-        path: manifests
-        projectName: default
-
     - id: register-component
       name: Register Component
       action: catalog:register
