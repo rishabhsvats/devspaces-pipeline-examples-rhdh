@@ -164,6 +164,43 @@ spec:
         deleteBranchOnMerge: true
         protectDefaultBranch: false
 
+    - id: create-argocd-app
+      name: Create ArgoCD Application
+      action: kubernetes:apply
+      input:
+        manifest: |
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: ${{ parameters.component_id }}
+            namespace: ${{ parameters.argocd_namespace }}
+            labels:
+              backstage.io/kubernetes-id: ${{ parameters.component_id }}
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: ${{ steps.publish.output.remoteUrl }}
+              targetRevision: HEAD
+              path: manifests
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: ${{ parameters.namespace }}
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: ${{ parameters.enable_auto_heal }}
+                allowEmpty: false
+              syncOptions:
+                - CreateNamespace=true
+              retry:
+                limit: 5
+                backoff:
+                  duration: 5s
+                  factor: 2
+                  maxDuration: 3m
+
     - id: register-component
       name: Register Component
       action: catalog:register
