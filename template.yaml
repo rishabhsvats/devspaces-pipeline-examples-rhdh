@@ -169,7 +169,7 @@ spec:
       action: argocd:create-resources
       input:
         appName: ${{ parameters.component_id }}
-        argoInstance: default
+        argoInstance: argocd1
         namespace: ${{ parameters.namespace }}
         repoUrl: ${{ steps.publish.output.remoteUrl }}
         path: manifests
