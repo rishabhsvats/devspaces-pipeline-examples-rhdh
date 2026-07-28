@@ -5,6 +5,7 @@ metadata:
   namespace: ${{ values.argocd_namespace }}
   labels:
     backstage.io/kubernetes-id: ${{ values.component_id }}
+    app: ${{ values.component_id }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
