@@ -164,32 +164,16 @@ spec:
         deleteBranchOnMerge: true
         protectDefaultBranch: false
 
-    - id: create-argocd-app
+    - id: create-argocd-resources
       name: Create ArgoCD Application
       action: argocd:create-resources
       input:
         appName: ${{ parameters.component_id }}
         argoInstance: default
-        namespace: ${{ parameters.argocd_namespace }}
+        namespace: ${{ parameters.namespace }}
         repoUrl: ${{ steps.publish.output.remoteUrl }}
         path: manifests
-        project: default
-        destination:
-          server: https://kubernetes.default.svc
-          namespace: ${{ parameters.namespace }}
-        syncPolicy:
-          automated:
-            prune: true
-            selfHeal: ${{ parameters.enable_auto_heal }}
-            allowEmpty: false
-          syncOptions:
-            - CreateNamespace=true
-          retry:
-            limit: 5
-            backoff:
-              duration: 5s
-              factor: 2
-              maxDuration: 3m
+        labelValue: ${{ parameters.component_id }}
 
     - id: register-component
       name: Register Component
