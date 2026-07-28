@@ -6,7 +6,7 @@ metadata:
     pipelinesascode.tekton.dev/on-target-branch: "[main]"
     pipelinesascode.tekton.dev/max-keep-runs: "5"
     pipelinesascode.tekton.dev/on-path-change-ignore: "[manifests/***, .tekton/***]"
-  name: ${{ values.component_id }}-build-deploy
+  name: ${{ values.component_id }}
 spec:
   serviceAccountName: pipeline-sa
   taskRunTemplate:
