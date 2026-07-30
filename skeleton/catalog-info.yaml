@@ -5,7 +5,7 @@ metadata:
   description: ${{ values.description }}
   annotations:
     backstage.io/techdocs-ref: dir:.
-    argocd/app-selector: 'backstage-app=${{ values.component_id }}'
+    argocd/app-selector: 'backstage-name=${{ values.component_id }}'
     backstage.io/kubernetes-id: ${{ values.component_id }}
     backstage.io/kubernetes-namespace: ${{ values.namespace }}
     backstage.io/kubernetes-label-selector: 'app=${{ values.component_id }}'
