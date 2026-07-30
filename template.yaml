@@ -71,7 +71,7 @@ spec:
           title: Image Repository
           type: string
           description: Container image repository (e.g., username/image-name)
-          default: rishabh1234/simple-go
+          default: rhn_support_rissingh/simple-go
         image_tag:
           title: Image Tag
           type: string
