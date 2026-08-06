@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: ${{ values.component_id }}
+    backstage-name: ${{ values.component_id }}
     app.kubernetes.io/instance: ${{ values.component_id }}
     app.kubernetes.io/name: ${{ values.component_id }}
     app.kubernetes.io/part-of: ${{ values.component_id }}
